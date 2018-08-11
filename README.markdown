@@ -4,6 +4,13 @@ This is the boilerplate codebase for deploying a back-end react-react typescript
 
 ## Get Started
 
+Development
+```zsh
+npm install
+npm watch-server
+```
+
+### Manually Building
 ```zsh
 npm install
 npm run build-ts
@@ -28,3 +35,7 @@ npm run start
 - pg
 - typescript
 - jest
+
+## References
+
+- Getting started with koa on node https://medium.com/netscape/start-building-web-apps-with-koajs-and-typescript-366264dec608
