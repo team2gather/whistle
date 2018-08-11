@@ -15,7 +15,8 @@ import compress from 'koa-compress';
 app.use(compress())
 
 import serveStatic from 'koa-static';
-app.use(serveStatic('public', { maxage: 0 }))
+import path from 'path';
+app.use(serveStatic(path.join(__dirname, '../public'), { maxage: 0 }))
 
 import logger from 'koa-logger';
 app.use(logger())

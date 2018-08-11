@@ -7,18 +7,19 @@ This is the boilerplate codebase for deploying a back-end react-react typescript
 Development
 ```zsh
 yarn
-npm watch-server
+yarn watch-server
 ```
 
 ### Manually Building
 ```zsh
 yarn
-npm run build-ts
-npm run start
+yarn run build-ts
+yarn run start
 ```
 
 ## TODOs
 
+- [ ] setup to load an index.html
 - [ ] get jest working
   - enzyme
   - ts-jest
