@@ -5,7 +5,7 @@
   "private": true,
   "main": "dist/app.js",
   "scripts": {
-    "start": "node app.js",
+    "start": "node dist/app.js",
     "start-dev": "nodemon --ext js,jsx,html app.js",
     "reset-db": "node ./sql/reset_db",
     "deploy": "git push heroku master",
@@ -14,8 +14,9 @@
     "minor": "npm version minor",
     "major": "npm version major",
     "postpublish": "git push origin master --follow-tags",
-    "build-ts": "tsc -p src",
-    "watch-ts": "tsc -w -p src"
+    "build-ts": "npm run clean && tsc",
+    "watch-ts": "tsc -w",
+    "clean": "rm -rf dist"
   },
   "repository": {
     "type": "git",
@@ -60,7 +61,9 @@
     "@types/jest": "^23.3.1",
     "@types/knex": "^0.14.20",
     "@types/koa": "^2.0.46",
+    "@types/koa-logger": "^3.1.0",
     "@types/koa-router": "^7.0.31",
+    "@types/koa-static": "^4.0.0",
     "@types/node": "^10.5.8",
     "@types/react": "^16.4.9",
     "@types/react-dom": "^16.0.7",
