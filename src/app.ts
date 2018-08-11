@@ -14,8 +14,8 @@ app.use(helmet())
 import compress from 'koa-compress';
 app.use(compress())
 
-// import serveStatic from 'koa-static';
-// app.use(serveStatic('public', { maxage: 0 }))
+import serveStatic from 'koa-static';
+app.use(serveStatic('public', { maxage: 0 }))
 
 import logger from 'koa-logger';
 app.use(logger())
