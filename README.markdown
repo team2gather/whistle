@@ -6,13 +6,13 @@ This is the boilerplate codebase for deploying a back-end react-react typescript
 
 Development
 ```zsh
-npm install
+yarn
 npm watch-server
 ```
 
 ### Manually Building
 ```zsh
-npm install
+yarn
 npm run build-ts
 npm run start
 ```
