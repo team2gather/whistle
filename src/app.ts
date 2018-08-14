@@ -21,7 +21,7 @@ app.use(serveStatic(path.join(__dirname, '../public'), { maxage: 0 }))
 import logger from 'koa-logger';
 app.use(logger())
 
-import bodyParser from "koa-bodyparser";
+import bodyParser from "koa-body";
 app.use(bodyParser())
 
 import bouncer from 'koa-bouncer';
