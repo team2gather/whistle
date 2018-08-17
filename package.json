@@ -33,6 +33,7 @@
   },
   "homepage": "https://github.com/team2gather/whistle#readme",
   "dependencies": {
+    "axios": "^0.18.0",
     "debug": "^3.1.0",
     "dotenv": "^6.0.0",
     "escape-html": "^1.0.3",
@@ -53,8 +54,10 @@
     "koa-static": "^5.0.0",
     "node-sass": "^4.9.3",
     "passport-google-oauth": "^1.0.0",
+    "passport-oauth": "^1.0.0",
     "pg": "^7.4.3",
     "pg-extra": "^1.1.0",
+    "querystring": "^0.2.0",
     "react": "^16.4.2",
     "react-template-render": "^1.1.0",
     "stripe": "^6.7.0",

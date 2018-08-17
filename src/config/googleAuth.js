@@ -4,17 +4,7 @@ dotenv.config();
 const passport = require('koa-passport');
 const GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
 
-const knex = require('../db/knex.js');
-
-function fetchUser(googleId) {
-  return new Promise((resolve, reject) => {
-    knex('users').where('google_id', googleId).then((rows) => {
-      resolve(rows[0]);
-    }).catch((err) => {
-      reject({});
-    });
-  });
-};
+import { fetchUserByGoogleId, createUser } from '../db/knexUtil.js';
 
 passport.serializeUser(function(user, done) {
   done(null, user.google_id)
@@ -22,7 +12,7 @@ passport.serializeUser(function(user, done) {
 
 passport.deserializeUser(async function(google_id, done) {
   try {
-    const user = await fetchUser(google_id)
+    const user = await fetchUserByGoogleId(google_id)
     done(null, user)
   } catch(err) {
     done(err)
@@ -36,10 +26,10 @@ passport.use(new GoogleStrategy({
   },
   async function(accessToken, refreshToken, profile, done) {
     try {
-      var user = await fetchUser(profile.id);
+      var user = await fetchUserByGoogleId(profile.id);
       if (!user) {
         user = { google_id: profile.id, google_email: profile.emails[0].value };
-        knex('users').insert(user).then();
+        createUser(user);
       } 
       return done(null, user);
     } catch(err) {

@@ -21,6 +21,7 @@ export const Home: ViewFn<null> = (ctx) =>
         data-locale="auto">
       </script>
     </form>
-    <a href="/auth/google">Sign In with Google</a>
+    {/* <p><a href="/auth/google">Sign In with Google</a></p> */}
+    <p><a href="/auth/slack">Sign In with Slack</a></p>
   </div>
   

@@ -39,7 +39,15 @@ const auth: Route = async (router) => {
     failureRedirect: '/'
   }), async (ctx) => {
     ctx.redirect('/user');
+  }),
+
+  router.get('/auth/slack', passport.authenticate('slack')),
+  router.get('/auth/slack/callback', passport.authenticate('slack', {
+    failureRedirect: '/'
+  }), async (ctx) => {
+    ctx.redirect('/user');
   }); 
+
 };
 
 export default [

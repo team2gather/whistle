@@ -27,7 +27,7 @@ app.use(bodyParser())
 import bouncer from 'koa-bouncer';
 app.use(bouncer.middleware())
 
-require('./config/auth');
+require('./config/slackAuth');
 const passport = require('koa-passport')
 app.use(passport.initialize())
 app.use(passport.session())
