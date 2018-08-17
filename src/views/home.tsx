@@ -8,7 +8,7 @@ type ViewFn<P> = (ctx: Context, params?: P) => JSX.Element;
 
 export const Home: ViewFn<null> = (ctx) =>
   <div>
-      "Hello World!"
+      <p>"Hello World!"</p>
       <form action="processPayment" method="POST">
       <script
         src="https://checkout.stripe.com/checkout.js" 
@@ -21,5 +21,6 @@ export const Home: ViewFn<null> = (ctx) =>
         data-locale="auto">
       </script>
     </form>
+    <a href="/auth/google">Sign In with Google</a>
   </div>
   

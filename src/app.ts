@@ -27,15 +27,24 @@ app.use(bodyParser())
 import bouncer from 'koa-bouncer';
 app.use(bouncer.middleware())
 
-import Router from "koa-router";
+require('./config/auth');
+const passport = require('koa-passport')
+app.use(passport.initialize())
+app.use(passport.session())
+
+const session = require('koa-session');
+app.keys = ['some secret hurr'];
+app.use(session(app)); 
+
+import Router from "koa-router"; 
 const router = new Router();
 
 import Routes from './routes';
 Routes.forEach(route => route(router))
 
 app.use(router.routes())
-
-const PORT = 3210;
+ 
+const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Listening on http://localhost:${PORT}`)
 })

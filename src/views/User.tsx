@@ -3,7 +3,7 @@ import { Context } from 'koa';
 
 type ViewFn<P> = (ctx: Context, params?: P) => JSX.Element;
 
-export const Payment: ViewFn<null> = (ctx) =>
+export const User: ViewFn<null> = (ctx) =>
   <div>
-    <p>You paid blah.</p>
+    <p>Logged in as: {ctx.state.user.id}</p>
   </div>
