@@ -4,12 +4,14 @@ import { Context } from 'koa';
 type ViewFn<P> = (ctx: Context, params?: P) => JSX.Element;
 
 type UserParams = {
-  email: string
+  email: string,
+  transactions: any[]
 };
 
 export const User: ViewFn<UserParams> = (ctx, params) =>
   <div>
     <p>Logged in as: {params ? params.email : ""}</p>
+    
     <form action="processPayment" method="POST">
       <script
         src="https://checkout.stripe.com/checkout.js" 
@@ -23,4 +25,15 @@ export const User: ViewFn<UserParams> = (ctx, params) =>
         data-locale="auto">
       </script>
     </form>
+
+    {params ? params.transactions.map(transact => {
+      return <div>
+        --------
+        <p>Date: {transact.created}</p>
+        <p>Item: {transact.description}</p>
+        <p>Amount: {transact.amount}</p>
+        --------
+      </div>;
+    }) : ""} 
+
   </div>
