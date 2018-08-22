@@ -2,6 +2,7 @@ import * as Home from './routes/home';
 import * as Payment from './routes/payment';
 import * as User from './routes/user';
 import Router from 'koa-router';
+
 const passport = require('koa-passport');
 
 type Route = (router: Router) => Promise<void>;
@@ -18,7 +19,9 @@ const home: Route = async (router) => {
 
 const payment: Route = async (router) => {
   router.get('/payment', Payment.get),
-  router.post('/processPayment', Payment.post)
+  router.post('/processPayment', Payment.post),
+  router.post('/processSubscription', Payment.processSubscription),
+  router.post('/checkAccess', Payment.checkAccess)
 };
 
 const user: Route = async (router) => {
