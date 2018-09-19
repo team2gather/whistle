@@ -19,9 +19,9 @@ const home: Route = async (router) => {
 
 const payment: Route = async (router) => {
   router.get('/payment', Payment.get),
-  router.post('/processPayment', Payment.post),
+  // router.post('/processPayment', Payment.post),
   router.post('/processSubscription', Payment.processSubscription),
-  router.post('/checkAccess', Payment.checkAccess)
+  router.post('/checkTeamAccess', Payment.checkTeamAccess)
 };
 
 const user: Route = async (router) => {

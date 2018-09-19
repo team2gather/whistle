@@ -3,33 +3,32 @@ const moment = require('moment');
 moment().format();
 
 // this needs to be severely refactored...
+const userTable = 'user';
+const slackTable = 'slack';
 
 export function createUser(obj) {
-  return knex('users').insert(obj).then();
+  return knex(userTable).insert(obj).then();
 };
 
 export function createSlackUser(obj) {
-  return knex('slack').insert(obj).then();
+  return knex(slackTable).insert(obj).then();
 };
 
 export function updateUser(where, data) {
-  return knex('users').where(where).update(data).then();
+  return knex(userTable).where(where).update(data).then();
 }
 
 export function updateSlackUser(where, data) {
-  return knex('slack').where(where).update(data).then();
+  return knex(slackTable).where(where).update(data).then();
 }
 
-export async function checkSubscriptionActive(email) {
-  const results = await fetchUserByEmail(email);
-  const existingCustomer = results ? results.data : null;
-  const slackTeamId = existingCustomer.teamId;
-
-  const slackUser = await fetchSlackUser('teamId', slackTeamId);
-  
+export async function checkSubscriptionActive(teamId) {
+  if (!teamId)
+    return false;
+  const slackUser = await fetchSlackUser('team_id', teamId);
   return new Promise((resolve, reject) => {
     if (slackUser) {
-      const periodEndDate = moment.unix(slackUser.data.subscription.periodEnd);
+      const periodEndDate = moment.unix(slackUser.subscription_data.current_period_end);
       const bufferedDate = periodEndDate.add(2, 'days');
       if (moment().isBefore(bufferedDate)) {
         resolve(true);
@@ -44,25 +43,26 @@ export async function checkSubscriptionActive(email) {
 
 export function fetchSlackUser(key, value) {
   return new Promise((resolve, reject) => {
-    knex('slack').where(key, value).then((rows) => {
+    knex(slackTable).where(key, value).then((rows) => {
       resolve(rows[0]);
     }).catch((err) => {
+      console.log(err);
       reject({});
     });
   });
 };
 
-export function fetchUserByEmail(value) {
-  return fetchUser('email', value);
-};
+// export function fetchUserByEmail(value) {
+//   return fetchUser('email', value);
+// };
 
-export function fetchUserByGoogleId(value) {
-  return fetchUser('google_id', value);
-};
+// export function fetchUserByGoogleId(value) {
+//   return fetchUser('google_id', value);
+// };
 
 export function fetchUser(key, value) {
   return new Promise((resolve, reject) => {
-    knex('users').where(key, value).then((rows) => {
+    knex(userTable).where(key, value).then((rows) => {
       resolve(rows[0]);
     }).catch((err) => {
       reject({});

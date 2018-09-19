@@ -1,7 +1,8 @@
 import { Context } from "koa";
 import { renderToStaticMarkup } from "react-dom/server";
 import { Payment } from "../views/payment";
-import * as KnexUtil from '../db/knexUtil.js'; 
+import * as KnexUtil from '../db/knexUtil.js';
+import { reject } from "bluebird";
 
 var moment = require('moment');
 moment().format();
@@ -15,31 +16,35 @@ export async function get(ctx: Context) {
   ctx.body = renderToStaticMarkup(Payment(ctx));
 }
 
-async function upsertUser(email:string, token:string) {
-  const results = await KnexUtil.fetchUserByEmail(email);
-  const existingCustomer = results ? results.data : null;
-  var stripeCustomerId = existingCustomer ? existingCustomer.stripeId : '';
-
+async function createOrFindStripeCustomer(slackId: string, teamId: string, email: string, token: string) {
+  const existingCustomer = await KnexUtil.fetchUser('slack_id', slackId);
+  console.log(existingCustomer);
+  if (!existingCustomer) {
+    reject('Slack user does not exist: ' + slackId); 
+  }
+  let stripeCustomerId = existingCustomer.stripe_id;
   // not connected to stripe
-  if (!existingCustomer || !stripeCustomerId) {
+  if (!stripeCustomerId) {
     const stripeCustomer = await stripe.customers.create({
       source: token,
       email: email,
+      metadata: {
+        'slack_id': slackId,
+        'team_id': teamId
+      }
     });
+    stripeCustomerId = stripeCustomer.id;
+    KnexUtil.updateUser({ slack_id: slackId }, { ...existingCustomer, stripe_id: stripeCustomerId });
+
     // new customer
-    if (!existingCustomer) {
-      KnexUtil.createUser({
-        email: email,
-        data: {
-          stripeId: stripeCustomer.id
-        }
-      });
+    // if (!existingCustomer) {
+    //   KnexUtil.createUser({
+    //     email: email,
+    //     data: {
+    //       stripeId: stripeCustomer.id
+    //     }
+    //   });
     // connect existing customer to stripe
-    } else if (!stripeCustomerId) {
-      const update = {...existingCustomer.data};
-      update.stripeId = stripeCustomer.id
-      KnexUtil.updateUser({email: email}, {data: update});
-    }
   } 
 
   return new Promise((resolve, reject) => {
@@ -47,74 +52,73 @@ async function upsertUser(email:string, token:string) {
   });
 }
 
-export async function checkAccess(ctx: Context) {
+export async function checkTeamAccess(ctx: Context) {
   if (ctx.isAuthenticated()) {
-    const active = await KnexUtil.checkSubscriptionActive(ctx.state.user.email);
-    console.log("User already subscribed.")
-    ctx.redirect('/user');
+    const active = await KnexUtil.checkSubscriptionActive(ctx.state.user.team_id);
+    if (active) {
+      console.log("User already subscribed.")
+      ctx.redirect('/user');
+    } else {
+      try {
+        processSubscription(ctx);
+        ctx.type = "html";
+        ctx.body = renderToStaticMarkup(Payment(ctx));
+      } catch(err) {
+        console.log(err);
+      }
+    }
   } else {
-    processSubscription(ctx);
+    ctx.redirect('/');
   }
 }
 
-export async function post(ctx: Context) {
-  const body =  ctx.request.body;
-  const stripeCustomerId = await upsertUser(body.stripeEmail, body.stripeToken);
-  const charge = await stripe.charges.create({
-    amount: 1000,
-    currency: 'usd',
-    customer: stripeCustomerId,
-    description: 'Example charge',
-    receipt_email: body.stripeEmail
-  });
+// export async function post(ctx: Context) {
+//   const body = ctx.request.body;
+//   const stripeCustomerId = await createOrFindStripeCustomer(body.slackId, body.teamId, body.stripeEmail, body.stripeToken);
+//   const charge = await stripe.charges.create({
+//     amount: 1000,
+//     currency: 'usd',
+//     customer: stripeCustomerId,
+//     description: 'Example charge',
+//     receipt_email: body.stripeEmail
+//   });
 
-  ctx.type = "html";
-  ctx.body = renderToStaticMarkup(Payment(ctx));
-}
+//   ctx.type = "html";
+//   ctx.body = renderToStaticMarkup(Payment(ctx));
+// }
 
 export async function processSubscription(ctx: Context) {
-  const body =  ctx.request.body;
-  if (KnexUtil.checkSubscriptionActive(body.stripeEmail)) {
-    //do nothing
-  } else {
-    const stripeCustomerId = await upsertUser(body.stripeEmail, body.stripeToken);
-    try {
-      stripe.subscriptions.create({
-        customer: stripeCustomerId,
-        items: [{
-            plan: "plan_DRTIXL0oJKRrmV"
-          },
-        ]}, async function(err:any, subscription:any) {
-          if (err) {
-            console.log('error! ', err); 
-          } else {
-            const results = await KnexUtil.fetchUserByEmail(body.stripeEmail);
-            const existingCustomer = results ? results.data : null;
-            const slackTeamId = existingCustomer.teamId;
-          
-            const slackUser = await KnexUtil.fetchSlackUser('teamId', slackTeamId);
-            const update = {
-              email: body.stripeEmail,
-              teamId: slackTeamId,
-              data: {
-                subscription: {
-                  periodStart: subscription.current_period_start,
-                  periodEnd: subscription.current_period_end
-                }
-              }
-            };
-            if (!slackUser) {
-              KnexUtil.createSlackUser(update);
-            } else {
-              KnexUtil.updateSlackUser({email: body.stripeEmail}, {data: update});
-            }
+  const body = ctx.request.body;
+  try {
+    const stripeCustomerId = await createOrFindStripeCustomer(body.slackId, body.teamId, body.stripeEmail, body.stripeToken);
+    stripe.subscriptions.create({
+      customer: stripeCustomerId,
+      items: [{
+        plan: "plan_DRTIXL0oJKRrmV"
+      }
+      ]
+    }, async function (err: any, subscription: any) {
+      if (err) {
+        console.log(err);
+      } else {
+        const slackUser = await KnexUtil.fetchSlackUser('team_id', body.teamId);
+        const update = {
+          team_id: body.teamId,
+          paid_by_id: body.slackId,
+          subscription_id: subscription.id,
+          subscription_data: {
+            current_period_start: subscription.current_period_start,
+            current_period_end: subscription.current_period_end
           }
-        });
-    } catch(err) {
-      console.log('error!', err);
-    }
+        };
+        if (!slackUser) {
+          KnexUtil.createSlackUser(update);
+        } else {
+          KnexUtil.updateSlackUser({ team_id: body.teamId }, update);
+        }
+      }
+    });
+  } catch (err) {
+    console.log(err);
   }
-
-  ctx.type = "html";
-  ctx.body = renderToStaticMarkup(Payment(ctx));
 }

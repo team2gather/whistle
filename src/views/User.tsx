@@ -7,6 +7,8 @@ moment().format();
 type ViewFn<P> = (ctx: Context, params?: P) => JSX.Element;
 
 type UserParams = {
+  slackId: string,
+  teamId: string,
   email: string,
   subscriptionActive: boolean,
   transactions: any[] 
@@ -32,11 +34,13 @@ export const User: ViewFn<UserParams> = (ctx, params) =>
         data-locale="auto">
       </script>
     </form> */}
-
-    <form action="/checkAccess" method="POST">
+  
+    <form action="/checkTeamAccess" method="POST">
       <p>Subscription</p>
+      <input type="hidden" name="slackId" value={params ? params.slackId : ""}/>
+      <input type="hidden" name="teamId" value={params ? params.teamId : ""}/>
       <script
-        src="https://checkout.stripe.com/checkout.js" 
+        src="https://checkout.stripe.com/checkout.js"  
         className="stripe-button"
         data-key={process.env.STRIPE_TEST_PUB_KEY}
         data-email={params ? params.email : ""}

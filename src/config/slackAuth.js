@@ -7,16 +7,16 @@ const OAuth2Strategy = require('passport-oauth').OAuth2Strategy;
 const axios = require('axios');
 const querystring = require('querystring');
 
-import { fetchUserByEmail, createUser, updateUser } from '../db/knexUtil.js';
+import { fetchUser, createUser, updateUser } from '../db/knexUtil.js';
 
 passport.serializeUser(function(user, done) {
-  done(null, user.email)
+  done(null, user.slack_id)
 })
 
-passport.deserializeUser(async function(email, done) {
+passport.deserializeUser(async function(id, done) {
   try {
-    const user = await fetchUserByEmail(email);
-    done(null, user.data);
+    const user = await fetchUser('slack_id', id);
+    done(null, user);
   } catch(err) {
     done(err)
   }
@@ -35,27 +35,31 @@ passport.use('slack', new OAuth2Strategy({
       token: accessToken
     }));
     const data = response.data;
+    console.log('oauth data', data);
     try {
-      var existingUser = await fetchUserByEmail(data.user.email);
-      if (!existingUser || !existingUser.data.id || !existingUser.data.token) {
+      var existingUser = await fetchUser('slack_id', data.user.id);
+      if (!existingUser || !existingUser.slack_id) {
         const user = { 
-          token: accessToken,
-          id: data.user.id,
-          name: data.user.name,
+          slack_id: data.user.id,
           email: data.user.email,
-          teamName: data.team.name,
-          teamId: data.team.id,
-          teamDomain: data.team.domain
+          user_data: {
+            name: data.user.name,
+          },
+          team_id: data.team.id,
+          team_data: {
+            name: data.team.name,
+            domain: data.team.domain
+          }
         };
         if (!existingUser) {
-          createUser({email: data.user.email, data: user});
+          createUser(user);
         } else {
-          const update = {...existingUser.data, ...user};
-          updateUser({email: data.user.email}, {data: update});
+          const update = {...existingUser, ...user};
+          updateUser({slack_id: data.user.id}, ...user);
         }
         return done(null, user); 
       } else {
-        return done(null, existingUser.data); 
+        return done(null, existingUser); 
       }
     } catch(err) {
       console.log(err);
